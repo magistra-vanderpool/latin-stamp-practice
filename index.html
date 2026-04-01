@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="la">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latinum Adaptivum | ACTFL Assessment</title>
+    
+    <!-- Dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Spectral:italic,wght@0,400;0,700;1,400&display=swap');
+        
+        body {
+            font-family: 'Spectral', serif;
+            background-color: #fdfaf3;
+            color: #2d1b0e;
+        }
+
+        .papyrus {
+            font-family: 'Papyrus', 'Palatino Linotype', 'Palatino', fantasy;
+        }
+
+        .academic-border {
+            border: 4px solid #d4af37;
+            box-shadow: 8px 8px 0px 0px rgba(45, 27, 14, 0.1);
+        }
+
+        .btn-classical {
+            background-color: #7b1d1d;
+            color: white;
+            padding: 1rem 2rem;
+            text-transform: uppercase;
+            font-weight: 900;
+            letter-spacing: 0.2em;
+            transition: all 0.3s;
+            box-shadow: 6px 6px 0px 0px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-classical:hover {
+            background-color: #5a1515;
+            transform: translate(2px, 2px);
+            box-shadow: 4px 4px 0px 0px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-classical:active {
+            transform: translate(6px, 6px);
+            box-shadow: none;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade { animation: fadeIn 0.5s ease-out forwards; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+
+        // Simple Icon Component for CDN usage since lucide-react UMD is tricky
+        const Icon = ({ name, size = 24, className = "" }) => {
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name]);
+            return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
+        };
+
+        const questionBank = [
+            // LEVEL 1: NOVICE LOW
+            { id: 101, level: 1, category: 'Vocabulary', passage: "Canis. Lupus. Aqua.", question: "Which word refers to a common household pet?", options: ["Canis", "Lupus", "Aqua", "None"], correct: 0 },
+            { id: 102, level: 1, category: 'Word Recognition', passage: "Equus currit. Servus laborat.", question: "Which word describes a person?", options: ["Equus", "Currit", "Servus", "Laborat"], correct: 2 },
+            { id: 103, level: 1, category: 'Vocabulary', passage: "In horto: Rosa, Arbor, Statua.", question: "Which item is a plant?", options: ["Statua", "Rosa", "Forum", "Senator"], correct: 1 },
+            { id: 104, level: 1, category: 'Word Recognition', passage: "Unus, duo, tres.", question: "What category do these words belong to?", options: ["Animals", "Colors", "Numbers", "Verbs"], correct: 2 },
+            { id: 105, level: 1, category: 'Vocabulary', passage: "Lupus est malus.", question: "Which word is the animal in this sentence?", options: ["Est", "Malus", "Lupus", "Roma"], correct: 2 },
+
+            // LEVEL 2: NOVICE MID
+            { id: 201, level: 2, category: 'Phrase Recognition', passage: "Roma est in Italia. Italia in Europa est.", question: "Where is Rome located?", options: ["In Greece", "In Egypt", "In Italy", "In Gaul"], correct: 2 },
+            { id: 202, level: 2, category: 'Main Idea', passage: "Pater et mater in villa habitant.", question: "Who lives in the house?", options: ["Only the father", "The parents", "The master and slave", "The dog and cat"], correct: 1 },
+            { id: 203, level: 2, category: 'Contextual Clues', passage: "Sol lucet. Caelum est caeruleum.", question: "What is the weather like?", options: ["It is raining", "The sun is shining", "It is night", "It is snowing"], correct: 1 },
+            { id: 204, level: 2, category: 'Vocabulary', passage: "Tiberis est fluvius. Roma ad Tiberim est.", question: "What is the Tiberis?", options: ["A mountain", "A road", "A river", "A temple"], correct: 2 },
+            { id: 205, level: 2, category: 'Phrase Recognition', passage: "Quid est nomen tibi? Nomen mihi est Claudia.", question: "What is happening in this exchange?", options: ["A trade", "An introduction", "A battle", "A prayer"], correct: 1 },
+
+            // LEVEL 3: NOVICE HIGH
+            { id: 301, level: 3, category: 'Main Idea', passage: "Salve! Nomen mihi est Marcus. Habito in Foro. Amo canes et equos.", question: "What is Marcus primarily sharing?", options: ["A grocery list", "Personal introductions", "A history of the Forum", "A military order"], correct: 1 },
+            { id: 302, level: 3, category: 'Main Idea', passage: "Esurio. Panem et caseum edere volo. Ubi est taberna?", question: "How does the narrator feel?", options: ["Tired", "Angry", "Hungry", "Sick"], correct: 2 },
+            { id: 303, level: 3, category: 'Supporting Details', passage: "Quotidie ad thermas eo. Postea in Foro ambulo.", question: "What does the narrator do daily?", options: ["Goes to the baths and walks in the Forum", "Studies in the library", "Works in the fields", "Fights in the Colosseum"], correct: 0 },
+            { id: 304, level: 3, category: 'Contextual Clues', passage: "Puer canem videt. Canis parvus est. Puer canem amat.", question: "Which statement is true?", options: ["The dog is big", "The boy hates the dog", "The boy sees a small dog", "The dog is in the house"], correct: 2 },
+            { id: 305, level: 3, category: 'Supporting Details', passage: "Marcus et Iulia in villa sedent. Marcus librum legit. Iulia picturam pingit.", question: "What are the characters doing?", options: ["Running", "Engaging in quiet activities at home", "Cooking dinner", "Sleeping"], correct: 1 },
+
+            // LEVEL 4: INTERMEDIATE LOW
+            { id: 401, level: 4, category: 'Main Idea', passage: "Hodie ad tabernam eo. Cibum et vinum emere volo. Amicus meus me exspectat.", question: "What is the plan?", options: ["Go to the temple", "Buy food and wine", "Sleep in the garden", "Visit the theater"], correct: 1 },
+            { id: 402, level: 4, category: 'Supporting Details', passage: "Mihi placet legere libros de historia Romana. Romulus primus rex erat. Roma in colle Palatino condita est.", question: "What is the narrator's interest?", options: ["Cooking", "Gardening", "Reading about early Roman history", "Singing"], correct: 2 },
+            { id: 403, level: 4, category: 'Supporting Details', passage: "Amicus meus aegrotat. Ad villam eius ibo ut auxilium feram.", question: "Why is the narrator going to the friend's house?", options: ["To steal food", "To help a sick friend", "To have a party", "To buy the house"], correct: 1 },
+            { id: 404, level: 4, category: 'Main Idea', passage: "Mane laboro, vespere cum amicis ceno. Vita mea est bona.", question: "When does the narrator work?", options: ["At night", "In the morning", "All day", "Never"], correct: 1 },
+            { id: 405, level: 4, category: 'Supporting Details', passage: "Puella ad flumen ambulat. Aquam portat. Mater eam vocat.", question: "What is the girl doing?", options: ["Swimming", "Carrying water", "Washing clothes", "Fishing"], correct: 1 },
+
+            // LEVEL 5: INTERMEDIATE MID
+            { id: 501, level: 5, category: 'Narrative Logic', passage: "Vulpis uvam pendentem aspicere coepit. Ad uvas saluit, sed attingere non potuit. Tandem discedens dixit: 'Nondum matura est.'", question: "Why does the fox leave the grapes?", options: ["Poisonous", "Claims they aren't ripe", "Another animal took them", "Not hungry"], correct: 1 },
+            { id: 502, level: 5, category: 'Main Idea', passage: "Leo dormiebat. Mus parvus super nasum leonis cucurrit. Leo excitatus murem cepit, sed postea dimisit.", question: "What did the lion do with the mouse?", options: ["Ate it", "Ignored it", "Caught it then let it go", "Killed it"], correct: 2 },
+            { id: 503, level: 5, category: 'Supporting Details', passage: "In Foro sunt multi mercatores. Unus mercator togas vendit, alter servos ducit. Cives undique conveniunt.", question: "What is happening in the Forum?", options: ["A quiet holiday", "Various traders are working", "A battle", "A funeral"], correct: 1 },
+            { id: 504, level: 5, category: 'Narrative Logic', passage: "Quia pluit, pueri in villa manent. Ludos ludunt et rident.", question: "Why are the boys inside?", options: ["They are tired", "It is raining", "They are punished", "It is night"], correct: 1 },
+            { id: 505, level: 5, category: 'Supporting Details', passage: "Pastoris ovis aberat. Pastor per silvam ambulavit et ovem sub arbore invenit.", question: "Where was the sheep?", options: ["In the river", "Under a tree", "In the house", "In the market"], correct: 1 },
+
+            // LEVEL 6: INTERMEDIATE HIGH
+            { id: 601, level: 6, category: 'Narrative Flow', passage: "Cum canis per flumen carnem ferret, videt simulacrum suum in speculo lympharum. Putans aliam praedam teneri, eripere voluit; sed deceptus aviditate, carnem dimisit.", question: "Why did the dog lose the meat?", options: ["Strong current", "Distracted by reflection", "Attacked by a dog", "Wanted to swim"], correct: 1 },
+            { id: 602, level: 6, category: 'Eutropius: History', passage: "Romanum imperium a Romulo exordium habet, qui Reae Silviae filius et Martis cum Remo fratre uno partu editus est.", question: "What is the origin of the Roman Empire?", options: ["Merchant league", "Romulus, son of Rhea Silvia and Mars", "Greek exiles", "Farming village"], correct: 1 },
+            { id: 603, level: 6, category: 'Thematic Analysis', passage: "Phaedrus fabulas scripsit ut homines moneret. In fabulis, animalia loquuntur et mores humanos ostendunt.", question: "Why did Phaedrus write fables?", options: ["Entertain children", "Warn/advise using animal metaphors", "Biological facts", "Document history"], correct: 1 },
+            { id: 604, level: 6, category: 'Supporting Details', passage: "Cato senex dixit: 'Carthago delenda est.' Hoc in omni oratione repetebat, donec urbs deleta est.", question: "What was Cato's message?", options: ["Peace", "Carthage must be destroyed", "New temples", "Raising taxes"], correct: 1 },
+            { id: 605, level: 6, category: 'Narrative Flow', passage: "Ubi Caesar in Galliam venit, helvetii iter per provinciam facere volebant. Caesar eos prohibuit.", question: "What did Caesar do to the Helvetians?", options: ["Helped them", "Prevented their passage", "Joined them", "Ignored them"], correct: 1 },
+
+            // LEVEL 7: ADVANCED LOW
+            { id: 701, level: 7, category: 'Complex Synthesis', passage: "Ad rivum eundem lupus et agnus venerant, siti compulsi. Superior stabat lupus, longeque inferior agnus. Tunc fauce improba latro jurgii causam intulit.", question: "How is the setting established?", options: ["Peaceful farm", "Stream-side positions highlighting power", "Dark forest", "Sharing a meal"], correct: 1 },
+            { id: 702, level: 7, category: 'Eutropius: Founding', passage: "Romulus civitatem condidit, quam ex nomine suo Romam vocavit. Ut civium numerum augeret, asylum patefecit.", question: "How did Romulus increase population?", options: ["Conquering", "Opening a sanctuary", "Offering gold", "Building a bridge"], correct: 1 },
+            { id: 703, level: 7, category: 'Narrative Logic', passage: "Vulpis, ubi leonem primum vidit, perterrita est. Secundo autem tempore, minus timuit. Tertio accessit et cum eo locuta est.", question: "What trend is described?", options: ["Becoming more afraid", "Becoming more comfortable", "Learning to hunt", "Leaving forest"], correct: 1 },
+            { id: 704, level: 7, category: 'Complex Synthesis', passage: "In triumpho, dux victor per Sacram Viam ad Capitolium ibat. Captivi ante currum ducebantur.", question: "What is the sequence?", options: ["Hidden ritual", "Public procession of victory", "Private dinner", "Dark sacrifice"], correct: 1 },
+            { id: 705, level: 7, category: 'Supporting Details', passage: "Hannibal montes superavit et in Italiam cum elephantis venit. Romani adventu eius maxime perturbati sunt.", question: "How did Romans react?", options: ["Happy", "Greatly disturbed", "Welcomed him", "Didn't notice"], correct: 1 },
+
+            // LEVEL 8: ADVANCED MID
+            { id: 801, level: 8, category: 'Cornelius Nepos: Character', passage: "Hamilcar, Hannibalis pater, cognomine Barca, rem publicam in Africa restituit.", question: "Achievement in Africa?", options: ["Religion", "Restored state affairs", "First navy", "Defeated"], correct: 1 },
+            { id: 802, level: 8, category: 'Main Idea', passage: "Nisi utile est quod facimus, stulta est gloria.", question: "Core moral?", options: ["Seek fame", "Glory is foolish without utility", "Doing nothing", "Work for others"], correct: 1 },
+            { id: 803, level: 8, category: 'Eutropius: Augustus', passage: "Octavianus Augustus Romam ita ornavit ut merito jactaret se marmoream relinquere.", question: "Change to Rome?", options: ["Farming village", "Left it in marble", "Moved capital", "Destroyed temples"], correct: 1 },
+            { id: 804, level: 8, category: 'Narrative Logic', passage: "Graculus superbus, pennis pavonis se ornavit. Pavones eum nudatum fugaverunt.", question: "Consequence of pride?", options: ["King", "Exposed and driven away", "Learned to fly", "New friends"], correct: 1 },
+            { id: 805, level: 8, category: 'Cornelius Nepos: Strategy', passage: "Themistocles persuasit eis ut classem in freto Salaminio instruerent.", question: "What did he persuade them?", options: ["Surrender", "Fleet at Salamis", "Build wall", "Flee"], correct: 1 },
+
+            // LEVEL 9: ADVANCED HIGH
+            { id: 901, level: 9, category: 'Cornelius Nepos: Hannibal', passage: "Hannibal populum Romanum virtute superarit, non est infitiandum Hannibalem tanto praestitisse.", question: "Primary assertion?", options: ["Unskilled", "Greatest commander", "Carthage survived", "Greater than army"], correct: 1 },
+            { id: 902, level: 9, category: 'Eutropius: Post-Caesar', passage: "Anno urbis septingentesimo, interfecto Caesare, civilia bella reparata sunt.", question: "Consequence of death?", options: ["Peace", "Renewal of civil wars", "New king", "Senate destroyed"], correct: 1 },
+            { id: 903, level: 9, category: 'Thematic Analysis', passage: "Homines id quod volunt credunt.", question: "Observation?", options: ["Objective", "Confirmation bias", "Believe nothing", "Power"], correct: 1 },
+            { id: 904, level: 9, category: 'Thematic Inference', passage: "Aesopus fabulas condidit. Sciat me non solum res sed vitam depingere.", question: "Defense?", options: ["Fiction", "Depicts life itself", "Children", "Original"], correct: 1 },
+            { id: 905, level: 9, category: 'Cornelius Nepos: Epaminondas', passage: "Epaminondas tantam diligentiam adhibuit, ut nemo eo magis patriam amaret.", question: "Character?", options: ["Lazy", "Paragon of virtues/patriot", "Traitor", "Philosophy only"], correct: 1 }
+        ];
+
+        const sublevelNames = [
+            "Novice Low", "Novice Mid", "Novice High",
+            "Intermediate Low", "Intermediate Mid", "Intermediate High",
+            "Advanced Low", "Advanced Mid", "Advanced High"
+        ];
+
+        const App = () => {
+            const [gameState, setGameState] = useState('start');
+            const [currentLevel, setCurrentLevel] = useState(1);
+            const [correctAtLevel, setCorrectAtLevel] = useState(0); 
+            const [history, setHistory] = useState([]);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [feedback, setFeedback] = useState(null);
+
+            const availableQuestions = useMemo(() => {
+                const usedIds = history.map(h => h.id);
+                const filtered = questionBank.filter(q => q.level === currentLevel && !usedIds.includes(q.id));
+                return filtered.length > 0 ? filtered : questionBank.filter(q => !usedIds.includes(q.id)).sort(() => Math.random() - 0.5);
+            }, [currentLevel, history]);
+
+            const currentQuestion = availableQuestions[0] || null;
+
+            const handleAnswer = (index) => {
+                if (feedback || !currentQuestion) return;
+                setSelectedOption(index);
+                const isCorrect = index === currentQuestion.correct;
+                
+                setFeedback({
+                    correct: isCorrect,
+                    explanation: isCorrect ? "Optime! Accurate interpretation." : `Minime. The correct answer was: ${currentQuestion.options[currentQuestion.correct]}`
+                });
+
+                setTimeout(() => {
+                    const newHistory = [...history, { ...currentQuestion, userCorrect: isCorrect }];
+                    setHistory(newHistory);
+                    
+                    if (isCorrect) {
+                        const nextCorrectCount = correctAtLevel + 1;
+                        if (nextCorrectCount >= 2 && currentLevel < 9) {
+                            setCurrentLevel(prev => prev + 1);
+                            setCorrectAtLevel(0);
+                        } else {
+                            setCorrectAtLevel(nextCorrectCount);
+                        }
+                    } else {
+                        if (currentLevel > 1) setCurrentLevel(prev => prev - 1);
+                        setCorrectAtLevel(0);
+                    }
+
+                    setFeedback(null);
+                    setSelectedOption(null);
+
+                    if (newHistory.length >= 10 || availableQuestions.length <= 1) setGameState('results');
+                }, 2000);
+            };
+
+            const breakdownData = useMemo(() => {
+                const categories = [...new Set(questionBank.map(q => q.category))];
+                return categories.map(cat => {
+                    const items = history.filter(h => h.category === cat);
+                    const correctCount = items.filter(i => i.userCorrect).length;
+                    return { category: cat, total: items.length, correct: correctCount };
+                }).filter(d => d.total > 0);
+            }, [history]);
+
+            const levelPerformance = useMemo(() => {
+                return [1,2,3,4,5,6,7,8,9].map(lvl => {
+                    const items = history.filter(h => h.level === lvl);
+                    const correctCount = items.filter(i => i.userCorrect).length;
+                    return { level: lvl, total: items.length, correct: correctCount };
+                }).filter(d => d.total > 0);
+            }, [history]);
+
+            const getGrowthAdvice = (lvl) => {
+                if (lvl <= 3) return ["Focus on identifying formulaic phrases and high-frequency nouns.", "Practice word-level recognition in predictable contexts.", "Work toward understanding subject-object relationships in basic sentences."];
+                if (lvl <= 6) return ["Analyze connective particles like 'ut' and 'quod' to follow narrative flow.", "Expand reading to the simplified chronological histories of Eutropius.", "Focus on identifying supporting details that justify main narrative points."];
+                return ["Engage with complex prose from Cornelius Nepos to understand characterization.", "Analyze rhetorical shifts and inferred tones in high-level literary extracts.", "Synthesize abstract moral themes with the historical context of the Republic."];
+            };
+
+            if (gameState === 'start') {
+                return (
+                    <div className="max-w-4xl mx-auto py-12 px-4 text-center">
+                        <header className="academic-border bg-[#fffcf5] p-10 mb-12">
+                            <h1 className="text-4xl font-black text-[#7b1d1d] uppercase tracking-tighter mb-2">Latinum Adaptivum</h1>
+                            <p className="text-[#8c7851] text-xs font-bold uppercase tracking-[0.3em]">Academia Historica • MMXXVI</p>
+                        </header>
+                        <div className="bg-[#fffcf5] p-12 academic-border mb-12">
+                            <div className="w-24 h-24 bg-[#7b1d1d] text-white rounded-full flex items-center justify-center mx-auto mb-8">
+                                <Icon name="book-open" size={48} />
+                            </div>
+                            <h2 className="text-3xl font-black mb-6">Interpretatio Latina</h2>
+                            <p className="text-lg italic mb-10 text-[#5d4b3d]">"Nisi utile est quod facimus, stulta est gloria."</p>
+                            <button onClick={() => setGameState('test')} className="btn-classical">Incipere Probatio</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'test') {
+                return (
+                    <div className="max-w-5xl mx-auto py-8 px-4">
+                        <header className="academic-border bg-[#fffcf5] p-6 mb-8 flex justify-between items-center">
+                            <div>
+                                <h1 className="text-xl font-bold text-[#7b1d1d] uppercase">Latinum Adaptivum</h1>
+                                <p className="text-[10px] uppercase text-[#8c7851] tracking-widest font-bold">Standardized Assessment</p>
+                            </div>
+                            <button onClick={() => setGameState('results')} className="text-xs font-bold text-red-700 flex items-center gap-1 uppercase">
+                                <Icon name="log-out" size={14} /> Terminare
+                            </button>
+                        </header>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <div className="lg:col-span-7 bg-[#fffcf5] academic-border p-10 min-h-[400px] flex flex-col relative">
+                                <div className="text-[10px] font-black uppercase text-[#8c7851] mb-6 flex items-center gap-2">
+                                    <Icon name="quote" size={16} /> Codex Excerptum
+                                </div>
+                                <div className="flex-grow flex items-center">
+                                    <p className="papyrus text-2xl md:text-3xl leading-relaxed text-center w-full italic">
+                                        {currentQuestion.passage}
+                                    </p>
+                                </div>
+                                <div className="absolute bottom-4 right-6 flex gap-1">
+                                    {[1,2].map(i => (
+                                        <div key={i} className={`h-2 w-6 border border-[#d4af37] ${i <= correctAtLevel ? 'bg-[#d4af37]' : ''}`}></div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="lg:col-span-5 space-y-4">
+                                <div className="bg-[#2d1b0e] text-[#fffcf5] p-6 academic-border !border-t-0 shadow-lg">
+                                    <div className="text-[10px] font-bold text-[#d4af37] uppercase tracking-widest mb-2">{currentQuestion.category}</div>
+                                    <h3 className="text-lg font-bold">{currentQuestion.question}</h3>
+                                </div>
+                                <div className="space-y-2">
+                                    {currentQuestion.options.map((opt, i) => (
+                                        <button key={i} disabled={feedback} onClick={() => handleAnswer(i)}
+                                            className={`w-full text-left p-4 border-2 font-bold text-sm transition-all flex justify-between
+                                            ${selectedOption === i ? (feedback?.correct ? 'border-green-600 bg-green-50' : 'border-red-600 bg-red-50') : 'border-[#e5e1d5] bg-white hover:border-[#7b1d1d]'}`}>
+                                            {opt}
+                                            {feedback && i === currentQuestion.correct && <Icon name="check-circle-2" size={18} className="text-green-600" />}
+                                        </button>
+                                    ))}
+                                </div>
+                                {feedback && (
+                                    <div className={`p-4 border-2 font-bold text-sm animate-fade ${feedback.correct ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                                        {feedback.explanation}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-4xl mx-auto py-12 px-4">
+                    <div className="academic-border bg-[#fffcf5] p-10 mb-8 text-center">
+                        <div className="w-20 h-20 bg-[#f4f1ea] border-2 border-[#d4af37] rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Icon name="trophy" size={40} className="text-[#d4af37]" />
+                        </div>
+                        <h2 className="text-3xl font-black uppercase tracking-tighter">Diplomata Gradus</h2>
+                        <p className="text-xs font-bold text-[#8c7851] uppercase tracking-[0.2em] mt-2">Proficiency Validation Complete</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div className="bg-[#2d1b0e] text-white p-8 academic-border !border-[#2d1b0e] flex flex-col justify-center items-center">
+                            <div className="text-[10px] font-bold text-[#d4af37] uppercase tracking-[0.3em] mb-2">Final Proficiency</div>
+                            <div className="text-4xl font-black text-center mb-2">{sublevelNames[currentLevel - 1]}</div>
+                            <div className="text-[10px] font-bold text-[#8c7851] uppercase">ACTFL SUBLEVEL {currentLevel}</div>
+                        </div>
+                        <div className="bg-white p-8 academic-border">
+                            <h4 className="font-bold text-xs uppercase text-[#7b1d1d] mb-4 flex items-center gap-2">
+                                <Icon name="scale" size={16} /> Analysis
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2">
+                                {breakdownData.map((d, i) => (
+                                    <div key={i} className="bg-[#fdfaf3] p-2 border border-[#e5e1d5] text-[10px]">
+                                        <div className="font-bold text-[#8c7851] truncate">{d.category}</div>
+                                        <div className="text-lg font-black">{Math.round((d.correct/d.total)*100)}%</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-[#f4f1ea] p-8 academic-border mb-8">
+                        <h4 className="font-bold text-[#7b1d1d] mb-6 flex items-center gap-2 uppercase tracking-widest text-sm">
+                            <Icon name="trending-up" size={18} /> Strategia Augendi
+                        </h4>
+                        <ul className="space-y-4">
+                            {getGrowthAdvice(currentLevel).map((a, i) => (
+                                <li key={i} className="text-sm flex gap-3 italic">
+                                    <span className="font-bold text-[#d4af37]">{i+1}.</span> {a}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div className="text-center">
+                        <button onClick={() => window.location.reload()} className="btn-classical">Iterum Temptare</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
